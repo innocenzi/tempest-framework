@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Tempest\Database;
 
+use Tempest\Database\Attributes\Table;
 use Tempest\Database\Builder\ModelQueryBuilder;
 use Tempest\Database\Builder\TableName;
 use Tempest\Database\Exceptions\MissingRelation;
 use Tempest\Database\Exceptions\MissingValue;
 use function Tempest\get;
 use function Tempest\make;
+use function Tempest\reflect;
 use Tempest\Reflection\ClassReflector;
 use Tempest\Reflection\PropertyReflector;
 
@@ -55,10 +57,14 @@ trait IsDatabaseModel
 
     public static function table(): TableName
     {
-        $name = get(DatabaseConfig::class)
-            ->connection()
-            ->tableNamingStrategy()
-            ->getName(self::class);
+        if ($attribute = reflect(self::class)->getAttribute(Table::class)) {
+            $name = $attribute->name;
+        } else {
+            $name = get(DatabaseConfig::class)
+                ->connection()
+                ->tableNamingStrategy()
+                ->getName(self::class);
+        }
 
         return new TableName($name);
     }
