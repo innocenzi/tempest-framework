@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Tempest\Database;
 
+use Tempest\Database\Tables\NamingStrategy;
+use Tempest\Database\Tables\PluralizedSnakeCaseStrategy;
+
 final class DatabaseConfig
 {
     private array $migrations = [];
 
     public function __construct(
         public DatabaseConnection $connection,
+        public NamingStrategy $namingStrategy = new PluralizedSnakeCaseStrategy()
     ) {
     }
 

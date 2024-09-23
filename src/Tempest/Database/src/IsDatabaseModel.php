@@ -61,8 +61,7 @@ trait IsDatabaseModel
             $name = $attribute->name;
         } else {
             $name = get(DatabaseConfig::class)
-                ->connection()
-                ->tableNamingStrategy()
+                ->namingStrategy
                 ->getName(self::class);
         }
 
