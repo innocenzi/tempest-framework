@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tempest\Support;
 
+use Exception;
+use Tempest\Core\Composer;
 use Tempest\Core\Kernel;
 use function Tempest\get;
 
@@ -12,6 +14,26 @@ final readonly class PathHelper
     public static function root(string ...$paths): string
     {
         return static::make(get(Kernel::class)->root, ...$paths);
+    }
+
+    public static function toNamespace(string $path): string
+    {
+        $composer = get(Composer::class);
+        $kernel = get(Kernel::class);
+        $relativePath = str($path)
+            ->replaceStart($kernel->root, '')
+            ->replaceStart('/', '');
+
+        foreach ($composer->namespaces as $namespace => $directory) {
+            if ($relativePath->startsWith($directory)) {
+                return (string) $relativePath
+                    ->replace('/', '\\')
+                    ->replaceEnd('.php', '')
+                    ->prepend($namespace);
+            }
+        }
+
+        throw new Exception(sprintf('No registered namespace matches the specified path [%s].', $path));
     }
 
     public static function make(string ...$paths): string
