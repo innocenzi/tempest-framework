@@ -6,8 +6,10 @@ namespace Tempest\Console\Commands;
 
 use Tempest\Console\Console;
 use Tempest\Console\ConsoleCommand;
+use Tempest\Core\CanBePublished;
 use Tempest\Core\Composer;
 use Tempest\Core\Kernel;
+use Tempest\Generation\ClassManipulator;
 use Tempest\Reflection\ClassReflector;
 use Tempest\Support\PathHelper;
 use function Tempest\Support\str;
@@ -28,7 +30,7 @@ final readonly class PublishCommand
     )]
     public function publish(): void
     {
-        if (! $this->kernel->publishFiles) {
+        if (! $this->kernel->publishClasses) {
             $this->console->error('No files to publish.');
 
             return;
@@ -36,21 +38,21 @@ final readonly class PublishCommand
 
         $publish = $this->console->ask(
             question: 'Which files should be published?',
-            options: $this->kernel->publishFiles,
+            options: $this->kernel->publishClasses,
             multiple: true,
             asList: true,
         );
 
-        foreach ($publish as $file) {
+        foreach ($publish as $classToPublish) {
             $this->console->writeln();
 
             $suggestedPath = PathHelper::make(
-                $this->composer->mainNamespacePath,
-                basename($originalPath = (new ClassReflector($file))->getFilePath())
+                $this->composer->mainNamespace->path,
+                basename($originalPath = (new ClassReflector($classToPublish))->getFilePath())
             );
 
             $targetPath = $this->console->ask(
-                question: sprintf('Where do you want to publish %s?', $file),
+                question: sprintf('Where do you want to publish %s?', $classToPublish),
                 default: $suggestedPath,
                 validation: [new NotEmpty()]
             );
@@ -74,8 +76,11 @@ final readonly class PublishCommand
                 mkdir(dirname($targetPath), recursive: true);
             }
 
-            // TODO: transform final file's namespace and remove the publish attribute
-            copy($originalPath, $targetPath);
+            $manipulator = new ClassManipulator($classToPublish);
+            $manipulator->removeClassAttribute(CanBePublished::class);
+            $manipulator->updateNamespace(PathHelper::toNamespace($targetPath));
+
+            file_put_contents($targetPath, $manipulator->print());
 
             $this->console->writeln();
             $this->console->success(sprintf('Published %s.', $targetPath));

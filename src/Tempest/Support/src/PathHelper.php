@@ -22,14 +22,17 @@ final readonly class PathHelper
         $kernel = get(Kernel::class);
         $relativePath = str($path)
             ->replaceStart($kernel->root, '')
-            ->replaceStart('/', '');
+            ->replaceStart('/', '')
+            ->beforeLast(['/', '\\'])
+            ->finish('/');
 
-        foreach ($composer->namespaces as $namespace => $directory) {
-            if ($relativePath->startsWith($directory)) {
+        foreach ($composer->namespaces as $namespace) {
+            if ($relativePath->startsWith($namespace->path)) {
                 return (string) $relativePath
+                    ->replace($namespace->path, $namespace->namespace)
                     ->replace('/', '\\')
                     ->replaceEnd('.php', '')
-                    ->prepend($namespace);
+                    ->replaceEnd('\\', '');
             }
         }
 

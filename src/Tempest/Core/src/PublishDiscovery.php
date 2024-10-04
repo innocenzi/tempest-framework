@@ -26,7 +26,7 @@ final readonly class PublishDiscovery implements Discovery
             return;
         }
 
-        $this->kernel->publishFiles[] = $class->getName();
+        $this->kernel->publishClasses[] = $class->getName();
     }
 
     public function hasCache(): bool
@@ -42,16 +42,16 @@ final readonly class PublishDiscovery implements Discovery
             mkdir($directory, recursive: true);
         }
 
-        file_put_contents(self::CACHE_PATH, serialize($this->kernel->publishFiles));
+        file_put_contents(self::CACHE_PATH, serialize($this->kernel->publishClasses));
     }
 
     public function restoreCache(Container $container): void
     {
-        $publishFiles = unserialize(file_get_contents(self::CACHE_PATH), [
+        $classes = unserialize(file_get_contents(self::CACHE_PATH), [
             'allowed_classes' => true,
         ]);
 
-        $this->kernel->publishFiles = $publishFiles;
+        $this->kernel->publishClasses = $classes;
     }
 
     public function destroyCache(): void
