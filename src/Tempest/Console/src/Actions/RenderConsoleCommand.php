@@ -6,7 +6,8 @@ namespace Tempest\Console\Actions;
 
 use Tempest\Console\Console;
 use Tempest\Console\ConsoleCommand;
-use Tempest\Reflection\ParameterReflector;
+use Tempest\Console\Input\ConsoleArgumentDefinition;
+use function Tempest\Support\str;
 
 final readonly class RenderConsoleCommand
 {
@@ -18,8 +19,8 @@ final readonly class RenderConsoleCommand
     {
         $parts = ["<em><strong>{$consoleCommand->getName()}</strong></em>"];
 
-        foreach ($consoleCommand->handler->getParameters() as $parameter) {
-            $parts[] = $this->renderParameter($parameter);
+        foreach ($consoleCommand->getArgumentDefinitions() as $arguments) {
+            $parts[] = $this->renderArgument($arguments);
         }
 
         if ($consoleCommand->description !== null && $consoleCommand->description !== '') {
@@ -29,22 +30,28 @@ final readonly class RenderConsoleCommand
         $this->console->writeln(' ' . implode(' ', $parts));
     }
 
-    private function renderParameter(ParameterReflector $parameter): string
+    private function renderArgument(ConsoleArgumentDefinition $parameter): string
     {
-        /** @phpstan-ignore-next-line */
-        $type = $parameter->getType()?->getName();
-        $optional = $parameter->isOptional();
-        $defaultValue = strtolower(var_export($optional ? $parameter->getDefaultValue() : null, true));
-        $name = "<em>{$parameter->getName()}</em>";
+        $name = str($parameter->name)
+            ->kebab()
+            ->prepend('<em>')
+            ->append('</em>');
 
-        $asString = match($type) {
+        $asString = match($parameter->type) {
             'bool' => "<em>--</em>{$name}",
             default => $name,
         };
 
-        return match($optional) {
-            true => "[{$asString}={$defaultValue}]",
-            false => "<{$asString}>",
+        if (! $parameter->hasDefault) {
+            return "<{$asString}>";
+        }
+
+        return match (true) {
+            $parameter->default === true => "[{$asString}=true]",
+            $parameter->default === false => "[{$asString}=false]",
+            is_null($parameter->default) => "[{$asString}=null]",
+            is_array($parameter->default) => "[{$asString}=array]",
+            default => "[{$asString}={$parameter->default}]"
         };
     }
 }

@@ -10,6 +10,8 @@ use Tempest\Console\ConsoleInputBuilder;
 use Tempest\Console\ExitCode;
 use Tempest\Console\Initializers\Invocation;
 use Tempest\Console\Input\ConsoleArgumentBag;
+use Tempest\Console\MakeCommand;
+use Tempest\Console\MakeCommandFactory;
 use Tempest\Container\Container;
 
 final readonly class ExecuteConsoleCommand
@@ -37,14 +39,18 @@ final readonly class ExecuteConsoleCommand
         $callable = function (Invocation $invocation) {
             $consoleCommand = $invocation->consoleCommand;
 
-            $handler = $consoleCommand->handler;
-
-            $consoleCommandClass = $this->container->get($handler->getDeclaringClass()->getName());
+            if ($consoleCommand instanceof MakeCommand) {
+                $class = $this->container->get(MakeCommandFactory::class);
+                $handler = $class->create($consoleCommand);
+            } else {
+                $class = $this->container->get($consoleCommand->handler->getDeclaringClass()->getName());
+                $handler = $consoleCommand->handler;
+            }
 
             $inputBuilder = new ConsoleInputBuilder($consoleCommand, $invocation->argumentBag);
 
             $consoleCommand->handler->invokeArgs(
-                $consoleCommandClass,
+                $class,
                 $inputBuilder->build(),
             );
 
