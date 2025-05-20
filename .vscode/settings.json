@@ -1,0 +1,11 @@
+{
+  "[vue]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.format": "explicit"
+    },
+    "editor.autoClosingBrackets": "languageDefined",
+    "togglequotes.chars": ["'", "`", "\""],
+    "editor.insertSpaces": false,
+    "editor.defaultFormatter": "Vue.volar"
+  }
+}
