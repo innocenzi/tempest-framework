@@ -17,6 +17,7 @@ use Tempest\Discovery\DiscoveryLocation;
 use Tempest\Discovery\SkipDiscovery;
 use Tempest\Reflection\ClassReflector;
 use Throwable;
+use Webmozart\Glob\Iterator\RegexFilterIterator;
 
 /** @internal */
 final class LoadDiscoveryClasses

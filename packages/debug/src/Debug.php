@@ -9,6 +9,7 @@ use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Symfony\Component\VarDumper\VarDumper;
 use Tempest\Container\GenericContainer;
+use Tempest\Debug\Backtrace\Backtrace;
 use Tempest\EventBus\EventBus;
 use Tempest\Highlight\Themes\TerminalStyle;
 use Tempest\Log\LogConfig;
@@ -36,18 +37,17 @@ final readonly class Debug
 
     public function log(array $items, bool $writeToLog = true, bool $writeToOut = true): void
     {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        $callPath = $trace[1]['file'] . ':' . $trace[1]['line'];
+        $backtrace = Backtrace::create();
 
         if ($writeToLog) {
-            $this->writeToLog($items, $callPath);
+            $this->writeToLog($items, $backtrace->first()->getCallPath());
         }
 
         if ($writeToOut) {
-            $this->writeToOut($items, $callPath);
+            $this->writeToOut($items, $backtrace->first()->getCallPath());
         }
 
-        $this->eventBus?->dispatch(new ItemsDebugged($items));
+        $this->eventBus?->dispatch(new ItemsDebugged($items, $backtrace));
     }
 
     private function writeToLog(array $items, string $callPath): void

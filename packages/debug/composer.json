@@ -5,8 +5,7 @@
     "minimum-stability": "dev",
     "require": {
         "php": "^8.4",
-        "tempest/highlight": "^2.11.4",
-        "symfony/var-dumper": "^7.1"
+        "tempest/highlight": "^2.11.4"
     },
     "autoload": {
         "psr-4": {
@@ -15,5 +14,10 @@
         "files": [
             "src/functions.php"
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tempest\\Debug\\Tests\\": "tests"
+        }
     }
 }

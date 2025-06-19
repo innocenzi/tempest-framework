@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tempest\Database;
 
 use BackedEnum;
-use DateTimeInterface;
+use DateTimeInterface as NativeDateTimeInterface;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -14,8 +14,11 @@ use Tempest\Database\Config\DatabaseDialect;
 use Tempest\Database\Connection\Connection;
 use Tempest\Database\Exceptions\QueryWasInvalid;
 use Tempest\Database\Transactions\TransactionManager;
+use Tempest\DateTime\DateTimeInterface;
 use Throwable;
 use UnitEnum;
+
+use function Tempest\Support\box;
 
 final class GenericDatabase implements Database
 {
@@ -134,6 +137,10 @@ final class GenericDatabase implements Database
             }
 
             if ($value instanceof DateTimeInterface) {
+                $value = $value->toNativeDateTime();
+            }
+
+            if ($value instanceof NativeDateTimeInterface) {
                 $value = $value->format('Y-m-d H:i:s');
             }
 
