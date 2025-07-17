@@ -1,0 +1,90 @@
+<?php
+
+namespace Tests\Tempest\Integration\Http;
+
+use Tempest\Core\AppConfig;
+use Tempest\Core\Environment;
+use Tempest\Http\Cookie\Cookie;
+use Tempest\Http\Session\CsrfTokenDidNotMatch;
+use Tempest\Http\Session\Session;
+use Tempest\Http\Session\VerifyCsrfMiddleware;
+use Tests\Tempest\Integration\FrameworkIntegrationTestCase;
+
+final class CsrfTest extends FrameworkIntegrationTestCase
+{
+    public function test_csrf_is_sent_as_cookie(): void
+    {
+        $this->container->get(AppConfig::class)->environment = Environment::PRODUCTION;
+
+        $token = $this->container->get(Session::class)->get(Session::CSRF_TOKEN_KEY);
+
+        $this->http
+            ->get('/test')
+            ->assertHasCookie(
+                VerifyCsrfMiddleware::CSRF_COOKIE_KEY,
+                fn (Cookie $cookie) => $cookie->value === $token, // @mago-expect security/no-insecure-comparison
+            );
+    }
+
+    public function test_throws_when_missing(): void
+    {
+        $this->expectException(CsrfTokenDidNotMatch::class);
+
+        $this->container->get(AppConfig::class)->environment = Environment::PRODUCTION;
+        $this->http->post('/test');
+    }
+
+    public function test_throws_when_mismatch_from_body(): void
+    {
+        $this->expectException(CsrfTokenDidNotMatch::class);
+
+        $this->container->get(AppConfig::class)->environment = Environment::PRODUCTION;
+        $this->container->get(Session::class)->set(Session::CSRF_TOKEN_KEY, 'abc');
+
+        $this->http->post('/test', [Session::CSRF_TOKEN_KEY => 'def']);
+    }
+
+    public function test_throws_when_mismatch_from_header(): void
+    {
+        $this->expectException(CsrfTokenDidNotMatch::class);
+
+        $this->container->get(AppConfig::class)->environment = Environment::PRODUCTION;
+        $this->container->get(Session::class)->set(Session::CSRF_TOKEN_KEY, 'abc');
+
+        $this->http->post('/test', [Session::CSRF_TOKEN_KEY => 'def']);
+    }
+
+    public function test_matches_from_body(): void
+    {
+        $this->container->get(AppConfig::class)->environment = Environment::PRODUCTION;
+
+        $session = $this->container->get(Session::class);
+
+        $this->http
+            ->post('/test', [Session::CSRF_TOKEN_KEY => $session->token])
+            ->assertOk();
+    }
+
+    public function test_matches_from_header(): void
+    {
+        $this->container->get(AppConfig::class)->environment = Environment::PRODUCTION;
+
+        $session = $this->container->get(Session::class);
+
+        $this->http
+            ->post('/test', headers: [VerifyCsrfMiddleware::CSRF_HEADER_KEY => $session->token])
+            ->assertOk();
+    }
+
+    public function test_csrf_component(): void
+    {
+        $rendered = $this->render(<<<HTML
+        <x-csrf-token />
+        HTML);
+
+        $session = $this->container->get(Session::class);
+
+        $this->assertStringMatchesFormat("<input type=\"hidden\" name=\"_csrf_token\" value=\"%s\">", $rendered);
+        $this->assertStringContainsString($session->token, $rendered);
+    }
+}
