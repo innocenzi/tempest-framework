@@ -12,6 +12,7 @@ use Tempest\Database\Config\DatabaseDialect;
 use Tempest\Database\Connection\Connection;
 use Tempest\Database\Exceptions\QueryWasInvalid;
 use Tempest\Database\Transactions\TransactionManager;
+use Tempest\EventBus\EventBus;
 use Tempest\Mapper\SerializerFactory;
 use Throwable;
 use UnitEnum;
@@ -37,6 +38,7 @@ final class GenericDatabase implements Database
         private(set) readonly Connection $connection,
         private(set) readonly TransactionManager $transactionManager,
         private(set) readonly SerializerFactory $serializerFactory,
+        private(set) readonly ?EventBus $eventBus = null,
     ) {}
 
     public function execute(BuildsQuery|Query $query): void
@@ -50,6 +52,8 @@ final class GenericDatabase implements Database
         try {
             $statement = $this->connection->prepare($query->compile()->toString());
             $statement->execute($bindings);
+
+            $this->eventBus?->dispatch(new QueryExecuted($query, $statement, $this));
 
             $this->lastStatement = $statement;
             $this->lastQuery = $query;
@@ -92,10 +96,12 @@ final class GenericDatabase implements Database
         $bindings = $this->resolveBindings($query);
 
         try {
-            $pdoQuery = $this->connection->prepare($query->compile()->toString());
-            $pdoQuery->execute($bindings);
+            $statement = $this->connection->prepare($query->compile()->toString());
+            $statement->execute($bindings);
 
-            return $pdoQuery->fetchAll(PDO::FETCH_NAMED);
+            $this->eventBus?->dispatch(new QueryExecuted($query, $statement, $this));
+
+            return $statement->fetchAll(PDO::FETCH_NAMED);
         } catch (PDOException $pdoException) {
             throw new QueryWasInvalid($query, $bindings, $pdoException);
         }

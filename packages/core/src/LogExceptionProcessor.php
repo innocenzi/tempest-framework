@@ -2,7 +2,6 @@
 
 namespace Tempest\Core;
 
-use Tempest\Debug\Debug;
 use Tempest\Log\Logger;
 use Throwable;
 
@@ -27,7 +26,5 @@ final class LogExceptionProcessor implements ExceptionProcessor
         ];
 
         $this->logger->error($throwable->getMessage(), $items);
-
-        Debug::resolve()->log($items, writeToOut: false);
     }
 }

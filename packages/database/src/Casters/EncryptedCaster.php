@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tempest\Database\Casters;
 
+use Tempest\Cryptography\Encryption\EncryptedData;
 use Tempest\Cryptography\Encryption\Encrypter;
 use Tempest\Cryptography\Encryption\Exceptions\EncryptionException;
 use Tempest\Mapper\Caster;
@@ -18,6 +19,10 @@ final readonly class EncryptedCaster implements Caster
     public function cast(mixed $input): ?string
     {
         if ($input === null) {
+            return null;
+        }
+
+        if (! is_string($input) && ! $input instanceof EncryptedData) {
             return null;
         }
 

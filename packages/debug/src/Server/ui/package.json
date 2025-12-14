@@ -1,0 +1,33 @@
+{
+	"name": "tempest-debug-server-ui",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "vite build --watch",
+		"build": "vue-tsc -b && vite build"
+	},
+	"devDependencies": {
+		"@nuxt/ui": "^3.2.0",
+		"@tailwindcss/vite": "^4.1.11",
+		"@vitejs/plugin-vue": "^6.0.0",
+		"@vue/tsconfig": "^0.7.0",
+		"@vueuse/core": "^13.5.0",
+		"arktype": "^2.1.20",
+		"motion-v": "^1.5.0",
+		"shiki": "^3.8.1",
+		"tailwindcss": "^4.1.11",
+		"temporal-polyfill": "^0.3.0",
+		"typescript": "~5.8.3",
+		"vite": "^7.0.5",
+		"vite-plugin-singlefile": "^2.3.0",
+		"vue": "^3.5.17",
+		"vue-router": "^4.5.1",
+		"vue-tsc": "^3.0.3"
+	},
+	"trustedDependencies": [
+		"@tailwindcss/oxide"
+	],
+	"dependencies": {
+		"sql-formatter": "^15.6.11"
+	}
+}
